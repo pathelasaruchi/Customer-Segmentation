@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
 import joblib
 from pathlib import Path
 
@@ -34,25 +35,19 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Load model and data
+APP_DIR = Path(__file__).resolve().parent
+MODEL_PATH = APP_DIR / "customer-segmentation.pkl"
+DATA_PATH = APP_DIR / "Mall_Customers.csv"
+
+
 @st.cache_resource
-def load_model_and_data():
-    try:
-        # Load the trained model
-        model = joblib.load('customer_segmentation_model.pkl')
-        
-        # Load data
-        data = pd.read_csv('Mall_Customers.csv')
-        
-        # Prepare features
-        X = data.iloc[:, [3, 4]].values
-        
-        # Predict clusters for all customers
-        data['Cluster'] = model.predict(X)
-        
-        return model, data
-    except FileNotFoundError:
-        return None, None
+def load_model_bundle(model_path):
+    return joblib.load(model_path)
+
+
+@st.cache_data
+def load_customer_data(data_path):
+    return pd.read_csv(data_path)
 
 
 # Cluster information
@@ -93,13 +88,12 @@ cluster_info = {
 st.title("Customer Segmentation System")
 st.markdown("### AI-Powered Marketing Intelligence")
 
-# Load model and data
-model, data = load_model_and_data()
-
-if model is None or data is None:
-    st.error("Model file not found!")
-    st.info("Please run 'customer-segmentation.ipynb' first to train and save the model.")
-    st.stop()
+model_bundle = load_model_bundle(str(MODEL_PATH))
+model = model_bundle["model"]
+scaler = model_bundle["scaler"]
+model_features = model_bundle["features"]
+data = load_customer_data(str(DATA_PATH))
+data["Cluster"] = model.predict(scaler.transform(data[model_features]))
 
 # Sidebar
 st.sidebar.title("Customer Profile")
@@ -114,8 +108,11 @@ segment_btn = st.sidebar.button("Find Customer Segment", type="primary", use_con
 # Main content
 if segment_btn:
     # Predict cluster
-    input_data = np.array([[annual_income, spending_score]])
-    predicted_cluster = model.predict(input_data)[0]
+    input_data = pd.DataFrame(
+        [[annual_income, spending_score]],
+        columns=["Annual Income (k$)", "Spending Score (1-100)"],
+    )[model_features]
+    predicted_cluster = int(model.predict(scaler.transform(input_data))[0])
     cluster_details = cluster_info[predicted_cluster]
     
     # Display results
