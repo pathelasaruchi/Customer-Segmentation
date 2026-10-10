@@ -124,7 +124,7 @@ if segment_btn:
     
     col1, col2 = st.columns([2, 1])
 
-        with col1:
+    with col1:
         # Cluster information
         st.markdown(f"""
         <div style='background-color: {cluster_details['color']}; padding: 2rem; border-radius: 1rem; color: white;'>
@@ -133,51 +133,52 @@ if segment_btn:
             <h4 style='color: white; margin: 10px 0;'>{cluster_details['description']}</h4>
         </div>
         """, unsafe_allow_html=True)
-        
+
         st.markdown("### Customer Characteristics")
-        
+
         # Find similar customers in this cluster
         cluster_customers = data[data['Cluster'] == predicted_cluster]
-        
+
         metrics_col1, metrics_col2, metrics_col3 = st.columns(3)
-        
+
         with metrics_col1:
             st.metric(
                 "Average Age",
                 f"{cluster_customers['Age'].mean():.0f} years"
             )
-        
+
         with metrics_col2:
             st.metric(
                 "Average Income",
                 f"${cluster_customers['Annual Income (k$)'].mean():.0f}k"
             )
-        
+
         with metrics_col3:
             st.metric(
                 "Average Spending",
                 f"{cluster_customers['Spending Score (1-100)'].mean():.0f}/100"
             )
+
         # Marketing strategy
         st.markdown("### Marketing Strategy")
         st.success(f"**Strategy:** {cluster_details['strategy']}")
-        
+
         # Cluster size
         cluster_size = len(cluster_customers)
         total_customers = len(data)
         st.info(f"**Segment Size:** {cluster_size} customers ({cluster_size/total_customers*100:.1f}% of total)")
 
-        with col2:
+    with col2:
         # Position on scatter plot
         st.markdown("### Your Position")
-        
+
         fig = go.Figure()
-        
+
         # Plot all clusters
         for cluster_id in range(5):
             cluster_data = data[data['Cluster'] == cluster_id]
             info = cluster_info[cluster_id]
-            
+
             fig.add_trace(go.Scatter(
                 x=cluster_data['Annual Income (k$)'],
                 y=cluster_data['Spending Score (1-100)'],
@@ -203,7 +204,7 @@ if segment_btn:
                 line=dict(color='yellow', width=2)
             )
         ))
-        
+
         fig.update_layout(
             title="Customer Position",
             xaxis_title="Annual Income (k$)",
@@ -211,13 +212,13 @@ if segment_btn:
             height=400,
             showlegend=False
         )
-        
+
         st.plotly_chart(fig, use_container_width=True)
 
- # All clusters overview
+    # All clusters overview
     st.markdown("---")
     st.header("All Customer Segments")
-    
+
     cols = st.columns(5)
     
     for idx, (cluster_id, info) in enumerate(cluster_info.items()):
@@ -234,7 +235,7 @@ if segment_btn:
             </div>
             """, unsafe_allow_html=True)
 
- # Detailed comparison
+    # Detailed comparison
     st.markdown("---")
     st.subheader("Segment Comparison")
     
